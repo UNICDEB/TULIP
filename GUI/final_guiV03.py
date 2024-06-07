@@ -56,8 +56,7 @@ class DepthCamera:
     
     def coordinate(self, depth_frame):
         co_ordinate = [23,45,45]
-        depth_intrinsics = self.pipeline.get_active_profile().get_stream(
-            rs.stream.depth).as_video_stream_profile().get_intrinsics()
+        depth_intrinsics = self.pipeline.get_active_profile().get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
         # depth_frame = np.loadtxt('frame_0.txt')
         depth_frame = np.asanyarray(depth_frame.get_data())
         x, y = 126, 236
@@ -74,8 +73,7 @@ class DepthCamera:
 
 
     def show_intrinsics(self):
-        depth_intrinsics = self.pipeline.get_active_profile().get_stream(
-            rs.stream.depth).as_video_stream_profile().get_intrinsics()
+        depth_intrinsics = self.pipeline.get_active_profile().get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
         return depth_intrinsics
 
     def camera_cordinates(self, u, v, ppx, ppy, fx, fy, depth):
@@ -115,14 +113,14 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure((0, 1, 2), weight=1)
 
         # create sidebar frame with widgets
-        self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
+        self.sidebar_frame = customtkinter.CTkFrame(self, width=140, height = 500, corner_radius=10)
         self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(6, weight=1)
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="TULIP", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
-        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text = "Open Camera", fg_color="#BB004B", hover_color='green', command=self.OpenCamera_btn)
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text = "Open Camera", hover_color='green', command=self.OpenCamera_btn)
         self.sidebar_button_1.grid(row=1, column=0, padx=10, pady=10)
-        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, text = "Capture Image", command=self.running)
+        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, text = "Capture Image", command=self.CaptureImage_btn)
         self.sidebar_button_2.grid(row=2, column=0, padx=10, pady=10)
         self.appearance_mode_optionemenu1 = customtkinter.CTkOptionMenu(self.sidebar_frame, values=['0', '1', '2', '3', '4'], command=self.change_preset_event)
         self.appearance_mode_optionemenu1.grid(row=3, column=0, padx=10, pady=(10, 10))
@@ -132,6 +130,8 @@ class App(customtkinter.CTk):
         self.sidebar_button_3.grid(row=5, column=0, padx=10, pady=10)
         self.sidebar_button_4 = customtkinter.CTkButton(self.sidebar_frame, text="Connect", command = self.connection)
         self.sidebar_button_4.grid(row=6, column=0, padx=10, pady=10)
+        self.sidebar_button_5 = customtkinter.CTkButton(self.sidebar_frame, text = "Running", command=self.running)
+        self.sidebar_button_5.grid(row=7, column=0, padx=10, pady=10)
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Mode:", anchor="w")
         self.appearance_mode_label.grid(row=15, column=0, padx=5, pady=(5, 5))
         self.appearance_mode_optionemenu3 = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"], command=self.change_appearance_mode_event)
@@ -191,11 +191,6 @@ class App(customtkinter.CTk):
         self.submit_button_1 = customtkinter.CTkButton(master=self.toplevel_window, text = "Submit", fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"), command = self.open_toplebel_input)
         self.submit_button_1.pack(padx=5, pady=(5, 5))
         
-
-        #if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
-        #    self.toplevel_window = ToplevelWindow(self)  # create window if its None or destroyed
-        #else:
-        #    self.toplevel_window.focus()  # if window exists focus it
     # open_toplevel function work 
     def open_toplebel_input(self):
         x = self.entry1.get()
@@ -212,6 +207,7 @@ class App(customtkinter.CTk):
         # except Exception as e:
         #     self.entry.delete(0,tk.END)
         #     self.entry.insert(0,e)
+        
     # Connection establish to the rpi
     def connection(self):
         print("True")
@@ -222,9 +218,13 @@ class App(customtkinter.CTk):
         client.publish("stop", client.running_topic)
 
     def OpenCamera_btn(self):
-        self.camera_opened = True
-        self.camera = DepthCamera()
-        self.update_camera()
+        try:
+            self.camera_opened = True
+            self.camera = DepthCamera()
+            self.update_camera()
+        except:
+            self.entry.delete(0,tk.END)
+            self.entry.insert(0,"Connect Realsense Camera")
     
     # For Color Image Function
     def update_camera(self):
@@ -234,14 +234,14 @@ class App(customtkinter.CTk):
         if ret:
             if(flag==1):
                 image = cv2.cvtColor(color_frame, cv2.COLOR_BGR2RGB)
-                image = Image.fromarray(image)
-                # if(flag==0):
-                #     image = Image.fromarray(depth_frame)        
+                image = Image.fromarray(image)       
             photo = customtkinter.CTkImage(image , size=(650, 450))
             self.label.configure(image=photo)
             self.label.image = photo
             self.label.grid(row=0, column=1, padx=(10, 0), pady=(10, 0), sticky="nsew")                  
         self.label.after(10, self.update_camera)
+        self.entry.delete(0,tk.END)
+        self.entry.insert(0,"Camera Opened Succesfully")
 
     def change_preset_event(self, new_preset):
         global preset
@@ -260,11 +260,20 @@ class App(customtkinter.CTk):
                 exp = int(exposure_value)
                 if self.camera_opened:
                     self.camera.update_exposure(exp, auto=False)
-    # Camera Access
-
+                    
     def show_box(self,data):
         self.entry.delete(0, tk.END)
         self.entry.insert(0,data)
+        
+    # Capture_Image Button Hit   
+    def CaptureImage_btn(self):
+        try:
+            self.phto_capture()   
+            self.entry.delete(0, tk.END)
+            self.entry.insert(0,"Current Frame Succesfully Saved")
+        except:
+            self.entry.delete(0, tk.END)
+            self.entry.insert(0,"Not Saved, Try Again.")
 
     # Image Capture
     def phto_capture(self):
@@ -283,7 +292,13 @@ class App(customtkinter.CTk):
             file1.write(str(counter))
             print(" Color frame_{}.jpg image saved".format(counter))
 
-    # Object Detection Function(Using YoloV8 Algorithm)
+    # Operation 
+    def operation_btn(self):
+        self.detection()
+        self.entry.delete(0, tk.END)
+        self.entry.insert(0,"Operation Successfully Complete")
+        
+    # Object Detection Function(Using YoloV8 Algorithm) Single
     def detection(self):
         ###########################################
         # Photo Capture
@@ -359,19 +374,6 @@ class App(customtkinter.CTk):
     #     self.entry.delete(0, tk.END)
     #     self.entry.insert(0,"Camera Succesfully Opened....")
         
-    # Capture_Image Button Hit   
-    def CaptureImage_btn(self):
-        self.phto_capture()   
-        self.entry.delete(0, tk.END)
-        a= self.entry.insert(0,"Current Frame Succesfully Saved...............")
-        #print(a)
-
-    # Refresh Button Hit     
-    def operation_btn(self):
-        self.detection()
-        self.entry.delete(0, tk.END)
-        self.entry.insert(0,"Operation Successfully Complete")  
-
         
     def open_input_dialog_event(self):
         dialog1 = customtkinter.CTkInputDialog(text="Type x, y, z coordinates:", title="CoordinateValue")
