@@ -118,19 +118,19 @@ class App(customtkinter.CTk):
         self.sidebar_frame.grid_rowconfigure(6, weight=1)
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="TULIP", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
-        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text = "Open Camera", hover_color='green', command=self.OpenCamera_btn)
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text = "Open Camera", hover_color='#0E6251', command=self.OpenCamera_btn)
         self.sidebar_button_1.grid(row=1, column=0, padx=10, pady=10)
-        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, text = "Capture Image", command=self.CaptureImage_btn)
+        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, text = "Capture Image", hover_color='#0E6251', command=self.CaptureImage_btn)
         self.sidebar_button_2.grid(row=2, column=0, padx=10, pady=10)
         self.appearance_mode_optionemenu1 = customtkinter.CTkOptionMenu(self.sidebar_frame, values=['0', '1', '2', '3', '4'], command=self.change_preset_event)
         self.appearance_mode_optionemenu1.grid(row=3, column=0, padx=10, pady=(10, 10))
         self.appearance_mode_optionemenu2 = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Auto", "Manual"], command=self.change_exposure_event)
         self.appearance_mode_optionemenu2.grid(row=4, column=0, padx=10, pady=(10, 10))
-        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, text="Start", command=self.operation_btn)
+        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, text="Start", hover_color='#0E6251', command=self.operation_btn)
         self.sidebar_button_3.grid(row=5, column=0, padx=10, pady=10)
-        self.sidebar_button_4 = customtkinter.CTkButton(self.sidebar_frame, text="Connect", command = self.connection)
+        self.sidebar_button_4 = customtkinter.CTkButton(self.sidebar_frame, text="Connect", hover_color='#0E6251', command = self.connection)
         self.sidebar_button_4.grid(row=6, column=0, padx=10, pady=10)
-        self.sidebar_button_5 = customtkinter.CTkButton(self.sidebar_frame, text = "Running", command=self.running)
+        self.sidebar_button_5 = customtkinter.CTkButton(self.sidebar_frame, text = "Running", hover_color='#0E6251', command=self.running)
         self.sidebar_button_5.grid(row=7, column=0, padx=10, pady=10)
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Mode:", anchor="w")
         self.appearance_mode_label.grid(row=15, column=0, padx=5, pady=(5, 5))
@@ -159,7 +159,7 @@ class App(customtkinter.CTk):
         self.radio_var = tkinter.IntVar(value=0)
         self.label_radio_group = customtkinter.CTkLabel(master=self.radiobutton_frame, text="COORDINATE INPUT :")
         self.label_radio_group.grid(row=0, column=2, columnspan=1, padx=10, pady=10, sticky="nsew")
-        self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Coordinate input", command= self.open_toplevel)
+        self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Coordinate input", hover_color='#0E6251', command= self.open_toplevel)
         self.radio_button_1.grid(row=1, column=2, padx=20, pady= (10,10))
         self.radio_button_2 = customtkinter.CTkButton(self.radiobutton_frame, text="Exit", fg_color="#BB004B", hover_color='black', command= self.quit)
         self.radio_button_2.grid(row=2, column=2, padx=20, pady= (10,10))
@@ -186,7 +186,7 @@ class App(customtkinter.CTk):
         
     def open_toplevel(self):
         self.toplevel_window = ToplevelWindow(self)
-        self.entry1 = customtkinter.CTkEntry(self.toplevel_window, placeholder_text="X Point - ")
+        self.entry1 = customtkinter.CTkEntry(self.toplevel_window, placeholder_text="Enter Coordinates Value- ")
         self.entry1.pack()
         self.submit_button_1 = customtkinter.CTkButton(master=self.toplevel_window, text = "Submit", fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"), command = self.open_toplebel_input)
         self.submit_button_1.pack(padx=5, pady=(5, 5))
@@ -200,7 +200,8 @@ class App(customtkinter.CTk):
         print(type(x))
         x_list = x.split(", ")
         x_list = [int(i) for i in x_list]
-        client.publish(x_list, "coordinate")
+        print("Coordinates Value  - ", x_list)
+        # client.publish(x_list, "coordinate")
         # try:
         #     self.entry.delete(0,tk.END)
         #     self.entry.insert(0,print("X, Y, Z coordinates : ", x,y,z))
@@ -373,6 +374,76 @@ class App(customtkinter.CTk):
     #     self.color_frme()
     #     self.entry.delete(0, tk.END)
     #     self.entry.insert(0,"Camera Succesfully Opened....")
+    
+    # Multiple Exposure Detection
+    def mul_exp_detection(self):
+        ###########################################
+        # Photo Capture
+        ret, depth_frame, color_frame = self.camera.get_frame()
+        counter=0
+        if ret:
+            filename =  f"frame_{counter}.jpg"
+            cv2.imwrite(filename, color_frame)
+            f = open(f"frame_{counter}.txt", "a+")
+            np.savetxt(f"frame_{counter}.txt",depth_frame)
+            f.close()
+            print("Depth frame_{}.txt image saved".format(counter))
+            counter+=1
+            tkinter.messagebox.showinfo("Image Saved", f"Image saved as {filename}")
+            file1= open("test.txt","w")
+            file1.write(str(counter))
+            print(" Color frame_{}.jpg image saved".format(counter))
+
+        ###############################################
+        model = YOLO('yolov8_weights/best.pt')
+        frame = cv2.imread("frame_0.jpg")
+        counter = 0
+        # Multiple Exposure Convert
+        exposures = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
+        # Create a list of images with different exposures
+        exposed_images = []
+        for exposure in exposures:
+            exposed_image = cv2.convertScaleAbs(frame, alpha=exposure, beta=0)
+            exposed_images.append(exposed_image)
+        # Save the images
+        for i, exposed_image in enumerate(exposed_images):
+            cv2.imwrite("Exposure_Image/exp_image_{}.jpg".format(i), exposed_image)
+        l1= []
+        l2=[]
+        path = "Exposure_Image"
+        # List the files in the folder.
+        files = os.listdir(path)
+        # Read all images in the folder.
+        images = []
+        # Detect  Object from each image and save it to list
+        for file in files:
+            file_path = os.path.join(path, file)
+            img = cv2.imread(file_path)
+            counter=counter+1
+            results = model(img)
+            annotated_frame = results[0].plot()
+            bounding_box = results[0]
+            # Extract bounding boxes, classes, names, and confidences
+            boxes = results[0].boxes.xyxy.tolist()
+            classes = results[0].boxes.cls.tolist()
+            names = results[0].names
+            confidences = results[0].boxes.conf.tolist()
+            # Add new detections to the list if their confidence is above 50%
+            if(len(boxes)>len(l1)):
+                l1.clear()
+                for box, confidence in zip(boxes, confidences):
+                    if confidence >= 0.1:
+                        l1.append(box)
+                        # Center Point Calcute
+                        center_x = round((box[0] + box[2]) / 2)
+                        center_y = round((box[1] + box[3]) / 2)
+                        l2.append((center_x, center_y))
+            
+            # client.publish(l2 , "coordinate")
+            return l1, l2
+            
+            
+        
         
         
     def open_input_dialog_event(self):
