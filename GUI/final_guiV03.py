@@ -120,7 +120,7 @@ class App(customtkinter.CTk):
         self.sidebar_frame.grid_rowconfigure(6, weight=1)
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="TULIP", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
-        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text = "Open Camera", command=self.OpenCamera_btn)
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text = "Open Camera", fg_color="#BB004B", hover_color='green', command=self.OpenCamera_btn)
         self.sidebar_button_1.grid(row=1, column=0, padx=10, pady=10)
         self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, text = "Capture Image", command=self.running)
         self.sidebar_button_2.grid(row=2, column=0, padx=10, pady=10)
@@ -161,7 +161,7 @@ class App(customtkinter.CTk):
         self.label_radio_group.grid(row=0, column=2, columnspan=1, padx=10, pady=10, sticky="nsew")
         self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Coordinate input", command= self.open_toplevel)
         self.radio_button_1.grid(row=1, column=2, padx=20, pady= (10,10))
-        self.radio_button_2 = customtkinter.CTkButton(self.radiobutton_frame, text="Exit", command= self.quit)
+        self.radio_button_2 = customtkinter.CTkButton(self.radiobutton_frame, text="Exit", fg_color="#BB004B", hover_color='black', command= self.quit)
         self.radio_button_2.grid(row=2, column=2, padx=20, pady= (10,10))
         self.entry1 = customtkinter.CTkEntry(self.radiobutton_frame, placeholder_text="X Point - ")
         self.entry1.grid(row=4, column=2, padx=20, pady=(10, 10), sticky="nsew")
@@ -438,13 +438,7 @@ class App(customtkinter.CTk):
 
 
 if __name__ == "__main__":
-
-    # # Full Module (final version of code)
-    # try:
-    #     dc = DepthCamera()
-    # except:
-    #     print("Error: Depth Camera not connected")
-   
+       
     # client.connect_mqtt()
     app = App()
     # client.subscribe(app,client.error_topic)
