@@ -113,7 +113,7 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure((0, 1, 2), weight=1)
 
         # create sidebar frame with widgets
-        self.sidebar_frame = customtkinter.CTkFrame(self, width=140, height = 500, corner_radius=10)
+        self.sidebar_frame = customtkinter.CTkFrame(self, corner_radius=10)
         self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(6, weight=1)
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="TULIP", font=customtkinter.CTkFont(size=20, weight="bold"))
@@ -128,10 +128,10 @@ class App(customtkinter.CTk):
         self.appearance_mode_optionemenu2.grid(row=4, column=0, padx=10, pady=(10, 10))
         self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, text="Start", hover_color='#0E6251', command=self.operation_btn)
         self.sidebar_button_3.grid(row=5, column=0, padx=10, pady=10)
-        self.sidebar_button_4 = customtkinter.CTkButton(self.sidebar_frame, text="Connect", hover_color='#0E6251', command = self.connection)
-        self.sidebar_button_4.grid(row=6, column=0, padx=10, pady=10)
-        self.sidebar_button_5 = customtkinter.CTkButton(self.sidebar_frame, text = "Running", hover_color='#0E6251', command=self.running)
-        self.sidebar_button_5.grid(row=7, column=0, padx=10, pady=10)
+        # self.sidebar_button_4 = customtkinter.CTkButton(self.sidebar_frame, text="Connect", hover_color='#0E6251', command = self.connection)
+        # self.sidebar_button_4.grid(row=6, column=0, padx=10, pady=10)
+        # self.sidebar_button_5 = customtkinter.CTkButton(self.sidebar_frame, text = "Running", hover_color='#0E6251', command=self.running)
+        # self.sidebar_button_5.grid(row=7, column=0, padx=10, pady=10)
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Mode:", anchor="w")
         self.appearance_mode_label.grid(row=15, column=0, padx=5, pady=(5, 5))
         self.appearance_mode_optionemenu3 = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"], command=self.change_appearance_mode_event)
@@ -149,28 +149,34 @@ class App(customtkinter.CTk):
         self.textbox = customtkinter.CTkFrame(self)
         self.textbox.grid(row=0, column=1, padx=(10, 0), pady=(10, 0), sticky="nsew")
         self.heading = customtkinter.CTkLabel(font=("Times New Roman", 20) , justify="center" , master=self.textbox, text="\t\tWELCOME TO TULIP \n\n\t\tTea Harvesting Unmanned Robotic Plartform.")
-        self.heading.grid(padx = 5,pady=5, sticky= "nswe")
-        
-        
+        self.heading.grid(padx = 5,pady=5, sticky= "nsew")
+
 
         # create radiobutton frame
         self.radiobutton_frame = customtkinter.CTkFrame(self)
         self.radiobutton_frame.grid(row=0, column=3, padx=(20, 20), pady=(20, 0), sticky="nsew")
         self.radio_var = tkinter.IntVar(value=0)
-        self.label_radio_group = customtkinter.CTkLabel(master=self.radiobutton_frame, text="COORDINATE INPUT :")
-        self.label_radio_group.grid(row=0, column=2, columnspan=1, padx=10, pady=10, sticky="nsew")
-        self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Coordinate input", hover_color='#0E6251', command= self.open_toplevel)
-        self.radio_button_1.grid(row=1, column=2, padx=20, pady= (10,10))
-        self.radio_button_2 = customtkinter.CTkButton(self.radiobutton_frame, text="Exit", fg_color="#BB004B", hover_color='black', command= self.quit)
-        self.radio_button_2.grid(row=2, column=2, padx=20, pady= (10,10))
+        
+        self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Connect", hover_color='#0E6251', command = self.connection)
+        self.radio_button_1.grid(row=0, column=3, padx=20, pady=(10,10))
+        self.radio_button_2 = customtkinter.CTkButton(self.radiobutton_frame, text = "Running", hover_color='#0E6251', command=self.running)
+        self.radio_button_2.grid(row=1, column=3, padx=20, pady=(10,10))
+        
+        
+        self.radio_button_3 = customtkinter.CTkButton(self.radiobutton_frame, text="Coordinate input", hover_color='#0E6251', command= self.open_toplevel)
+        self.radio_button_3.grid(row=2, column=3, padx=20, pady= (10,10))
+        self.radio_button_4 = customtkinter.CTkButton(self.radiobutton_frame, text="Op_Mul_Exp", hover_color='#0E6251', command=self.mul_exp_detection)
+        self.radio_button_4.grid(row=3, column=3, padx=20, pady=(10,10))
+        self.radio_button_5 = customtkinter.CTkButton(self.radiobutton_frame, text="Exit", fg_color="#BB004B", hover_color='black', command= self.quit)
+        self.radio_button_5.grid(row=4, column=3, padx=20, pady= (10,10))
         self.entry1 = customtkinter.CTkEntry(self.radiobutton_frame, placeholder_text="X Point - ")
-        self.entry1.grid(row=4, column=2, padx=20, pady=(10, 10), sticky="nsew")
+        self.entry1.grid(row=5, column=3, padx=20, pady=(10, 10), sticky="nsew")
         self.entry2 = customtkinter.CTkEntry(self.radiobutton_frame, placeholder_text="Y Point - ")
-        self.entry2.grid(row=5, column=2, padx=20, pady=(10, 10), sticky="nsew")
+        self.entry2.grid(row=6, column=3, padx=20, pady=(10, 10), sticky="nsew")
         self.entry3 = customtkinter.CTkEntry(self.radiobutton_frame, placeholder_text="Z Point - ")
-        self.entry3.grid(row=6, column=2, padx=20, pady=(10, 10), sticky="nsew")
+        self.entry3.grid(row=7, column=3, padx=20, pady=(10, 10), sticky="nsew")
         self.submit_button_1 = customtkinter.CTkButton(master=self.radiobutton_frame, text = "Submit", fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE") , command=self.coordinate_input)
-        self.submit_button_1.grid(row=8, column=2, padx=20, pady=(10, 10), sticky="nsew")
+        self.submit_button_1.grid(row=9, column=3, padx=20, pady=(10, 10), sticky="nsew")
 
         # set default values
         self.appearance_mode_optionemenu1.set("Camera Preset")
@@ -211,12 +217,20 @@ class App(customtkinter.CTk):
         
     # Connection establish to the rpi
     def connection(self):
-        print("True")
-        client.publish("yes", client.ack_topic)
+        try:
+            print("True")
+            client.publish("yes", client.ack_topic)
+        except:
+            self.entry.delete(0,tk.END)
+            self.entry.insert(0,"Connection Refused, Try Again")  
 
     # Send Running Process
     def running(self):
-        client.publish("stop", client.running_topic)
+        try:
+            client.publish("stop", client.running_topic)
+        except:
+            self.entry.delete(0,tk.END)
+            self.entry.insert(0,"Running Refused, Try Again") 
 
     def OpenCamera_btn(self):
         try:

@@ -10,6 +10,9 @@ class Mqtt_Node():
         self.client_id=f'publish-{random.randint(0, 1000)}'
         self.coordinate_topic="tulip/coordinate"
         self.error_topic="tulip/error"
+        # Broker Connection 
+        self.ack_topic = "tulip/ack"
+        self.running_topic = "tulip/running"
 
     def connect_mqtt(self):
         def on_connect(client, userdata, flags, rc,properties):
@@ -23,13 +26,17 @@ class Mqtt_Node():
         self.client.connect(self.broker, self.port)
         
     def publish(self,value,topic):
-        if(topic=="coordinate"):
+        if(topic==self.coordinate_topic):
             msg=f"coordinates:{value}"
             #msg=f"coordinates:{value[0]},{value[1]},{value[2]}"
-            topic=self.coordinate_topic
-        if(topic=="error"):
+        if(topic==self.error_topic):
             msg=f"Error: {value}"
-            topic=self.error_topic
+        if(topic == self.ack_topic):
+            msg = f"Ack:{value}"
+        if(topic == self.running_topic):
+            # value - stop
+            msg = f"Running:{value}"
+
 
         result = self.client.publish(topic, msg)
         # result: [0, 1]
@@ -47,12 +54,13 @@ class Mqtt_Node():
         self.client.loop_stop()
 
 
-    def subscribe(self,app):
+    def subscribe(self,app,topic):
         global data
         def on_message(client, userdata, msg):
             print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
             app.show_box(msg.payload.decode())
+            # app.show_box("Connection Succesfully")
             # data.append(msg.payload.decode())
 
-        self.client.subscribe(self.error_topic)
+        self.client.subscribe(topic)
         self.client.on_message = on_message
