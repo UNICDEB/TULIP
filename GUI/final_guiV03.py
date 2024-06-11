@@ -145,11 +145,18 @@ class App(customtkinter.CTk):
         self.entry = customtkinter.CTkEntry(self, placeholder_text=" ", height=50, corner_radius = 10)
         self.entry.grid(row=3, column=1, columnspan=2,rowspan =10, padx=(20, 20), pady=(20, 20),sticky="nsew")
         
+        # # Create Title Label
+        # self.textbox = customtkinter.CTkTextbox(master=self, corner_radius=10)
+        # self.textbox.grid(row=0, column=1, sticky="nsew")
+        # # self.textbox.insert("0.0", "Some example text!\n" * 50)
+        # self.heading = customtkinter.CTkLabel(master=self.textbox, font=("Times New Roman", 20) , justify="center" , text="WELCOME TO TULIP")
+        # self.heading.grid(padx = 0,pady=0, sticky= "nsew")
+        
         # create textboxs
         self.textbox = customtkinter.CTkFrame(self)
         self.textbox.grid(row=0, column=1, padx=(10, 0), pady=(10, 0), sticky="nsew")
-        self.heading = customtkinter.CTkLabel(font=("Times New Roman", 20) , justify="center" , master=self.textbox, text="\t\tWELCOME TO TULIP \n\n\t\tTea Harvesting Unmanned Robotic Plartform.")
-        self.heading.grid(padx = 5,pady=5, sticky= "nsew")
+        # self.heading = customtkinter.CTkLabel(font=("Times New Roman", 20) , justify="center" , master=self.textbox, text="\t\tWELCOME TO TULIP \n\n\t\tTea Harvesting Unmanned Robotic Plartform.")
+        # self.heading.grid(padx = 5,pady=5, sticky= "nsew")
 
 
         # create radiobutton frame
