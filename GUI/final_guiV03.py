@@ -90,12 +90,21 @@ customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("blue")
 
 # Top Level Window
-class ToplevelWindow(customtkinter.CTkToplevel):
+class Coordinate_input(customtkinter.CTkToplevel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.geometry("300x200")
+        self.geometry("400x350")
         self.title("Co-ordinate Input")
-        self.label = customtkinter.CTkLabel(self, text="")
+        self.label = customtkinter.CTkLabel(self, text="Enter Coordinate Values")
+        self.label.pack(padx=20, pady=20)
+        
+# Confarmation Page Class
+class confarmation_page(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("200x200")
+        self.title("Operation Confarmation Page")
+        self.label = customtkinter.CTkLabel(self, text="Confarmation")
         self.label.pack(padx=20, pady=20)
 
 # Tkinter API
@@ -164,13 +173,15 @@ class App(customtkinter.CTk):
         self.radiobutton_frame.grid(row=0, column=3, padx=(20, 20), pady=(20, 0), sticky="nsew")
         self.radio_var = tkinter.IntVar(value=0)
         
-        self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Connect", hover_color='#0E6251', command = self.connection)
+        # self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Connect", hover_color='#0E6251', command = self.connection)
+        # self.radio_button_1.grid(row=0, column=3, padx=20, pady=(10,10))
+        self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Connect", hover_color='#0E6251', command = self.detection_confarmation)
         self.radio_button_1.grid(row=0, column=3, padx=20, pady=(10,10))
         self.radio_button_2 = customtkinter.CTkButton(self.radiobutton_frame, text = "Running", hover_color='#0E6251', command=self.running)
         self.radio_button_2.grid(row=1, column=3, padx=20, pady=(10,10))
         
         
-        self.radio_button_3 = customtkinter.CTkButton(self.radiobutton_frame, text="Coordinate input", hover_color='#0E6251', command= self.open_toplevel)
+        self.radio_button_3 = customtkinter.CTkButton(self.radiobutton_frame, text="Coordinate input", hover_color='#0E6251', command= self.open_coordinate_input_window)
         self.radio_button_3.grid(row=2, column=3, padx=20, pady= (10,10))
         self.radio_button_4 = customtkinter.CTkButton(self.radiobutton_frame, text="Op_Mul_Exp", hover_color='#0E6251', command=self.mul_exp_detection)
         self.radio_button_4.grid(row=3, column=3, padx=20, pady=(10,10))
@@ -197,10 +208,10 @@ class App(customtkinter.CTk):
         self.camera_opened = False
         self.camera = None
         
-    def open_toplevel(self):
-        self.toplevel_window = ToplevelWindow(self)
-        self.entry1 = customtkinter.CTkEntry(self.toplevel_window, placeholder_text="Enter Coordinates Value- ")
-        self.entry1.pack()
+    def open_coordinate_input_window(self):
+        self.toplevel_window = Coordinate_input(self)
+        self.entry1 = customtkinter.CTkEntry(self.toplevel_window, placeholder_text="Enter Coordinates Value- ", width = 250)
+        self.entry1.pack(padx=20, pady=(20,20))
         self.submit_button_1 = customtkinter.CTkButton(master=self.toplevel_window, text = "Submit", fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"), command = self.open_toplebel_input)
         self.submit_button_1.pack(padx=5, pady=(5, 5))
         
@@ -215,6 +226,7 @@ class App(customtkinter.CTk):
         x_list = [int(i) for i in x_list]
         print("Coordinates Value  - ", x_list)
         # client.publish(x_list, "coordinate")
+        
         # try:
         #     self.entry.delete(0,tk.END)
         #     self.entry.insert(0,print("X, Y, Z coordinates : ", x,y,z))
@@ -257,7 +269,8 @@ class App(customtkinter.CTk):
             if(flag==1):
                 image = cv2.cvtColor(color_frame, cv2.COLOR_BGR2RGB)
                 image = Image.fromarray(image)       
-            photo = customtkinter.CTkImage(image , size=(650, 450))
+            # photo = customtkinter.CTkImage(image , size=(650, 450))
+            photo = customtkinter.CTkImage(image , size=(1080, 720))
             self.label.configure(image=photo)
             self.label.image = photo
             self.label.grid(row=0, column=1, padx=(10, 0), pady=(10, 0), sticky="nsew")                  
@@ -313,12 +326,27 @@ class App(customtkinter.CTk):
             file1= open("test.txt","w")
             file1.write(str(counter))
             print(" Color frame_{}.jpg image saved".format(counter))
+            
+    # After Detection Confarmation Page Function
+    def detection_confarmation(self):
+        self.confarmation_window = confarmation_page(self)
+        self.button_yes = customtkinter.CTkButton(self.confarmation_window, text="Yes", width =20,  command=lambda: self.submit_choice("Yes"))
+        self.button_yes.pack(side="left", padx=20, pady=20, expand=True)
+        self.button_no = customtkinter.CTkButton(self.confarmation_window, text="No", width = 20, command=lambda: self.submit_choice("No"))
+        self.button_no.pack(side="right", padx=20, pady=20, expand=True)
+        
+    # detection_confarmation Function Action
+    def submit_choice(self, choice):
+        print("Select - ", choice)
+        # client.publish("yes", client.confarmation_topic)
+        # self.destroy()
 
     # Operation 
     def operation_btn(self):
         self.detection()
         self.entry.delete(0, tk.END)
         self.entry.insert(0,"Operation Successfully Complete")
+        self.detection_confarmation()
         
     # Object Detection Function(Using YoloV8 Algorithm) Single
     def detection(self):
@@ -345,7 +373,7 @@ class App(customtkinter.CTk):
         # depth_frame = np.loadtxt("frame_0.txt")
         l1= []
         l2=[]
-        model = YOLO('yolov8_weights/best.pt')
+        model = YOLO(r'F:\Debabrata_Folder\PROJECT_WORK\TULIP\Tulip Sample Code\GITHUB\YoloV8\Weight_V02\best.pt')
         results = model(frame)
         #annotated_frame = results[0].plot()
         #bounding_box = results[0]
@@ -538,6 +566,7 @@ if __name__ == "__main__":
     # client.subscribe(app,client.error_topic)
     # client.subscribe(app,client.ack_topic)
     # client.subscribe(app,client.running_topic)
+    # client.subscribe(app, client.confarmation_topic)
     # client.start_listining() 
 
     #app = App()

@@ -13,6 +13,7 @@ class Mqtt_Node():
         # Broker Connection 
         self.ack_topic = "tulip/ack"
         self.running_topic = "tulip/running"
+        self.confarmation_topic = "tulip/confarmation"
 
     def connect_mqtt(self):
         def on_connect(client, userdata, flags, rc,properties):
