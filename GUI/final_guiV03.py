@@ -115,12 +115,28 @@ class Coordinate_input(customtkinter.CTkToplevel):
         
 # Confarmation Page Class
 class confarmation_page(customtkinter.CTkToplevel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.geometry("200x200")
-        self.title("Operation Confarmation Page")
-        self.label = customtkinter.CTkLabel(self, text="Confarmation")
+    def __init__(self):
+        super().__init__()
+        self.geometry("300x150")
+        self.title("Operation Confirmation Page")
+
+        self.label = customtkinter.CTkLabel(self, text="Confirmation")
         self.label.pack(padx=20, pady=20)
+
+        self.confirmation_window = customtkinter.CTkFrame(self)
+        self.confirmation_window.pack(padx=20, pady=20, expand=True)
+
+        self.button_yes = customtkinter.CTkButton(self.confirmation_window, text="Yes", width=20, command=lambda: self.submit_choice("yes"))
+        self.button_yes.pack(side="left", padx=10, pady=10, expand=True)
+        
+        self.button_no = customtkinter.CTkButton(self.confirmation_window, text="No", width=20, command=lambda: self.submit_choice("no"))
+        self.button_no.pack(side="right", padx=10, pady=10, expand=True)
+        
+    # detection_confarmation Function Action
+    def submit_choice(self, choice):
+        print("Select - ", choice)
+        # client.publish(f"Run:{choice}", client.ack_topic)
+        self.destroy()
 
 # Tkinter API
 class App(customtkinter.CTk):
@@ -190,7 +206,7 @@ class App(customtkinter.CTk):
         
         # self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Connect", hover_color='#0E6251', command = self.connection)
         # self.radio_button_1.grid(row=0, column=3, padx=20, pady=(10,10))
-        self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Connect", hover_color='#0E6251', command = self.detection_confarmation)
+        self.radio_button_1 = customtkinter.CTkButton(self.radiobutton_frame, text="Connect", hover_color='#0E6251', command = self.open_detection_confarmation)
         self.radio_button_1.grid(row=0, column=3, padx=20, pady=(10,10))
         self.radio_button_2 = customtkinter.CTkButton(self.radiobutton_frame, text = "Running", hover_color='#0E6251', command=self.running)
         self.radio_button_2.grid(row=1, column=3, padx=20, pady=(10,10))
@@ -348,21 +364,10 @@ class App(customtkinter.CTk):
             file1= open("test.txt","w")
             file1.write(str(counter))
             print(" Color frame_{}.jpg image saved".format(counter))
-            
-    # After Detection Confarmation Page Function
-    def detection_confarmation(self):
-        self.confarmation_window = confarmation_page(self)
-        self.button_yes = customtkinter.CTkButton(self.confarmation_window, text="Yes", width =20,  command=lambda: self.submit_choice("yes"))
-        self.button_yes.pack(side="left", padx=20, pady=20, expand=True)
-        self.button_no = customtkinter.CTkButton(self.confarmation_window, text="No", width = 20, command=lambda: self.submit_choice("no"))
-        self.button_no.pack(side="right", padx=20, pady=20, expand=True)
-        
-    # detection_confarmation Function Action
-    def submit_choice(self, choice):
-        print("Select - ", choice)
-        client.publish(f"Run:{choice}", client.ack_topic)
-        # self.destroy()
 
+    # After Detection Confarmation Page
+    def open_detection_confarmation(self):
+        self.detection_confarmation = confarmation_page()
     # Operation 
     def operation_btn(self):
         self.detection()
@@ -455,31 +460,38 @@ class App(customtkinter.CTk):
             l3.append(coordinate_point)
             
         # Final Coordinate Calculation
-        a = self.final_coordinate(self, l3)
+        a = self.final_coordinate(l3)
         # l3 = self.camera.coordinate(depth_frame)    
         # Data send
         # l3=[1,2,3,4,5,6]
         # client.publish(a , client.coordinate_topic)
+        # self.detection_confarmation()
+        print("Final Coordinate - ",a)
+        print("Type - ", type(a))
+        print("pixel center Point - ",l2)
+        print("Type - ", type(l2))
+        self.open_detection_confarmation()
         return a, l1, l2, l3
     
     # Final Coordinate Calculations
     def final_coordinate(self,l3):
+        print("Done l3 - ", l3)
         # # Load the saved model
-        loaded_model = tf.keras.models.load_model('my_model_best.keras')
-        print(loaded_model)
+        # loaded_model = tf.keras.models.load_model('my_model_best.keras')
+        # print(loaded_model)
 
-        # # Test the loaded model with new data
-        # new_data = np.array([[-174,-150],[-28,118],[148,95],[55,-351]])
-        new_data=l3
-        new_data=new_data/100
-        # Assuming new data has the same input shape as your training data
-        new_data=tf.convert_to_tensor(new_data, dtype=tf.float32)
-        print(new_data)
-        predictions = loaded_model.predict(new_data)
+        # # # Test the loaded model with new data
+        # # new_data = np.array([[-174,-150],[-28,118],[148,95],[55,-351]])
+        # new_data=l3
+        # new_data=new_data/100
+        # # Assuming new data has the same input shape as your training data
+        # new_data=tf.convert_to_tensor(new_data, dtype=tf.float32)
+        # print(new_data)
+        # predictions = loaded_model.predict(new_data)
 
-        # Display the predictions
-        print(predictions*100)
-        return(round(predictions*100))
+        # # Display the predictions
+        # print(predictions*100)
+        # return(round(predictions*100))
     
     # Pixel to Conordinte Convertion
     # def coordinate():
