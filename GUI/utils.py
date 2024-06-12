@@ -33,7 +33,8 @@ class Mqtt_Node():
         if(topic==self.error_topic):
             msg=f"Error: {value}"
         if(topic == self.ack_topic):
-            msg = f"Ack:{value}"
+            # msg = f"Ack:{value}"
+            msg = value
         if(topic == self.running_topic):
             # value - stop
             msg = f"Running:{value}"

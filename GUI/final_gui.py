@@ -393,10 +393,10 @@ if __name__ == "__main__":
     # except:
     #     print("Error: Depth Camera not connected")
    
-    client.connect_mqtt()
+    # client.connect_mqtt()
     app = App()
-    client.subscribe(app)
-    client.start_listining() 
+    # client.subscribe(app)
+    # client.start_listining() 
 
     #app = App()
     app.mainloop()
