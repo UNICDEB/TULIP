@@ -486,7 +486,7 @@ class App(customtkinter.CTk):
         # Display the predictions
         print("All Predictions are - ",predictions*100)
         # predictions = round(predictions*100)
-        self.ofset(predictions)
+        self.ofset(predictions,10,10)
         return(predictions)
     
     # Pixel to Conordinte Convertion
