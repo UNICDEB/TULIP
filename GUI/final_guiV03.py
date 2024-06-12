@@ -11,6 +11,9 @@ import glob
 from ultralytics import YOLO
 from utils import *
 import string
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
 
 counter=0
 client=Mqtt_Node(1883,'localhost')
@@ -26,7 +29,7 @@ class DepthCamera:
         pipeline_profile = config.resolve(pipeline_wrapper)
         self.device = pipeline_profile.get_device()
         self.device_product_line = str(self.device.get_info(rs.camera_info.product_line))
-        config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
+        config.enable_stream(rs.stream.depth, 848,480, rs.format.z16, 30)
         config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
         self.cfg = self.pipeline.start(config)
         self.depth_sensor = self.cfg.get_device().first_depth_sensor()
@@ -50,30 +53,42 @@ class DepthCamera:
         color_frame = frames.get_color_frame()
         depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
+        # print("Frame - ", type(depth_frame))
+        
         if not depth_frame or not color_frame:
             return False, None, None
         return True, depth_image, color_image
+        # return True
+    def get_depth_frame(self):
+        frames = self.pipeline.wait_for_frames()
+        depth_frame = frames.get_depth_frame()
+        if not depth_frame:
+            raise RuntimeError("Could not obtain depth frame.")
+        
+        return depth_frame
     
-    def coordinate(self, depth_frame):
-        co_ordinate = [23,45,45]
-        depth_intrinsics = self.pipeline.get_active_profile().get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
-        # depth_frame = np.loadtxt('frame_0.txt')
-        depth_frame = np.asanyarray(depth_frame.get_data())
-        x, y = 126, 236
-        depth = depth_frame.get_distance(x, y)
-        point = rs.rs2_deproject_pixel_to_point(depth_intrinsics, [x,y], depth)
-        x, y, z = point[0], point[1], point[1]
-        co_ordinate.append(x)
-        co_ordinate.append(", ")
-        co_ordinate.append(y)
-        co_ordinate.append(', ')
-        co_ordinate.append(z)
-
-        return(co_ordinate)
+    # def coordinate(self, x= 120, y = 210):
+    #     frames = self.pipeline.wait_for_frames()
+    #     depth_frame = frames.get_depth_frame()
+        
+    #     if not depth_frame:
+    #         raise RuntimeError("Could not obtain depth frame.")
+        
+    #     depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+    #     depth = depth_frame.get_distance(x, y)
+        
+    #     if depth <= 0:
+    #         raise ValueError("Invalid depth value.")
+        
+    #     point = rs.rs2_deproject_pixel_to_point(depth_intrin, [x, y], depth)
+    #     x, y, z = point[0], point[1], point[2]
+        
+    #     print("Point is - ", point)
 
 
     def show_intrinsics(self):
-        depth_intrinsics = self.pipeline.get_active_profile().get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
+        depth_intrinsics = self.pipeline.get_active_profile().get_stream(
+            rs.stream.depth).as_video_stream_profile().get_intrinsics()
         return depth_intrinsics
 
     def camera_cordinates(self, u, v, ppx, ppy, fx, fy, depth):
@@ -185,7 +200,7 @@ class App(customtkinter.CTk):
         self.radio_button_3.grid(row=2, column=3, padx=20, pady= (10,10))
         self.radio_button_4 = customtkinter.CTkButton(self.radiobutton_frame, text="Op_Mul_Exp", hover_color='#0E6251', command=self.mul_exp_detection)
         self.radio_button_4.grid(row=3, column=3, padx=20, pady=(10,10))
-        self.radio_button_5 = customtkinter.CTkButton(self.radiobutton_frame, text="Exit", fg_color="#BB004B", hover_color='black', command= self.quit)
+        self.radio_button_5 = customtkinter.CTkButton(self.radiobutton_frame, text="Exit", fg_color="#BB004B", hover_color='black', command= self.exit)
         self.radio_button_5.grid(row=4, column=3, padx=20, pady= (10,10))
         self.entry1 = customtkinter.CTkEntry(self.radiobutton_frame, placeholder_text="X Point - ")
         self.entry1.grid(row=5, column=3, padx=20, pady=(10, 10), sticky="nsew")
@@ -207,6 +222,11 @@ class App(customtkinter.CTk):
         # Initialize variables
         self.camera_opened = False
         self.camera = None
+        
+    # Exit Function 
+    def exit(self):
+        # client.publish('stop', client.running_topic)
+        self.quit()
         
     def open_coordinate_input_window(self):
         self.toplevel_window = Coordinate_input(self)
@@ -238,7 +258,7 @@ class App(customtkinter.CTk):
     def connection(self):
         try:
             print("True")
-            client.publish("yes", client.ack_topic)
+            client.publish("Ack:yes", client.ack_topic)
         except:
             self.entry.delete(0,tk.END)
             self.entry.insert(0,"Connection Refused, Try Again")  
@@ -256,9 +276,10 @@ class App(customtkinter.CTk):
             self.camera_opened = True
             self.camera = DepthCamera()
             self.update_camera()
-        except:
+        except Exception as e:
             self.entry.delete(0,tk.END)
             self.entry.insert(0,"Connect Realsense Camera")
+            print(e)
     
     # For Color Image Function
     def update_camera(self):
@@ -268,8 +289,9 @@ class App(customtkinter.CTk):
         if ret:
             if(flag==1):
                 image = cv2.cvtColor(color_frame, cv2.COLOR_BGR2RGB)
-                image = Image.fromarray(image)       
-            # photo = customtkinter.CTkImage(image , size=(650, 450))
+                image = Image.fromarray(image)
+                # if(flag==0):
+                #     image = Image.fromarray(depth_frame)        
             photo = customtkinter.CTkImage(image , size=(1080, 720))
             self.label.configure(image=photo)
             self.label.image = photo
@@ -330,15 +352,15 @@ class App(customtkinter.CTk):
     # After Detection Confarmation Page Function
     def detection_confarmation(self):
         self.confarmation_window = confarmation_page(self)
-        self.button_yes = customtkinter.CTkButton(self.confarmation_window, text="Yes", width =20,  command=lambda: self.submit_choice("Yes"))
+        self.button_yes = customtkinter.CTkButton(self.confarmation_window, text="Yes", width =20,  command=lambda: self.submit_choice("yes"))
         self.button_yes.pack(side="left", padx=20, pady=20, expand=True)
-        self.button_no = customtkinter.CTkButton(self.confarmation_window, text="No", width = 20, command=lambda: self.submit_choice("No"))
+        self.button_no = customtkinter.CTkButton(self.confarmation_window, text="No", width = 20, command=lambda: self.submit_choice("no"))
         self.button_no.pack(side="right", padx=20, pady=20, expand=True)
         
     # detection_confarmation Function Action
     def submit_choice(self, choice):
         print("Select - ", choice)
-        # client.publish("yes", client.confarmation_topic)
+        client.publish(f"Run:{choice}", client.ack_topic)
         # self.destroy()
 
     # Operation 
@@ -346,17 +368,36 @@ class App(customtkinter.CTk):
         self.detection()
         self.entry.delete(0, tk.END)
         self.entry.insert(0,"Operation Successfully Complete")
-        self.detection_confarmation()
+        # self.detection_confarmation()
         
     # Object Detection Function(Using YoloV8 Algorithm) Single
     def detection(self):
         ###########################################
         # Photo Capture
         ret, depth_frame, color_frame = self.camera.get_frame()
+        depth = self.camera.get_depth_frame()
         counter=0
+        # x=230
+        # y=167
+        # # depth_frame = self.depth_camera.get_depth_frame()
+        # depth_intrin = depth.profile.as_video_stream_profile().intrinsics
+        # depth = depth.get_distance(x, y)
+        
+        # if depth <= 0:
+        #     raise ValueError("Invalid depth value.")
+        
+        # point = rs.rs2_deproject_pixel_to_point(depth_intrin, [x, y], depth)
+        # x, y, z = point[0], point[1], point[2]
+        # print(point)
+        
         if ret:
             filename =  f"frame_{counter}.jpg"
             cv2.imwrite(filename, color_frame)
+            # processed_frame=rs.frame_queue()
+            # current_frameset=processed_frame.poll_for_frame().as_frameset()
+            # depth=current_frameset.get_depth_frame()
+            #get intrinsics
+            # depth_intrin = depth.profile.as_video_stream_profile().intrinsics
             f = open(f"frame_{counter}.txt", "a+")
             np.savetxt(f"frame_{counter}.txt",depth_frame)
             f.close()
@@ -405,13 +446,41 @@ class App(customtkinter.CTk):
         else:
             self.entry.delete(0, tk.END)
             self.entry.insert(0,"No Object Found")
-
-        l3 = self.camera.coordinate(depth_frame)    
+        l3=[]
+        depth_intrin = depth.profile.as_video_stream_profile().intrinsics
+        for i in range(len(l2)):
+            depth_value = depth.get_distance(l2[i][0],l2[i][1])
+            coordinate_point = rs.rs2_deproject_pixel_to_point(depth_intrin, [l2[i][0],l2[i][1]], depth_value)
+            coordinate_point = [round(coordinate_point[0]*1000), round(coordinate_point[1] * 1000), round(coordinate_point[2] * 1000)]
+            l3.append(coordinate_point)
+            
+        # Final Coordinate Calculation
+        a = self.final_coordinate(self, l3)
+        # l3 = self.camera.coordinate(depth_frame)    
         # Data send
         # l3=[1,2,3,4,5,6]
-        client.publish(l3 , "coordinate")
-        return l1, l2
+        # client.publish(a , client.coordinate_topic)
+        return a, l1, l2, l3
+    
+    # Final Coordinate Calculations
+    def final_coordinate(self,l3):
+        # # Load the saved model
+        loaded_model = tf.keras.models.load_model('my_model_best.keras')
+        print(loaded_model)
 
+        # # Test the loaded model with new data
+        # new_data = np.array([[-174,-150],[-28,118],[148,95],[55,-351]])
+        new_data=l3
+        new_data=new_data/100
+        # Assuming new data has the same input shape as your training data
+        new_data=tf.convert_to_tensor(new_data, dtype=tf.float32)
+        print(new_data)
+        predictions = loaded_model.predict(new_data)
+
+        # Display the predictions
+        print(predictions*100)
+        return(round(predictions*100))
+    
     # Pixel to Conordinte Convertion
     # def coordinate():
     #     depth = depth_frame.get_distance(x, y)
@@ -491,9 +560,7 @@ class App(customtkinter.CTk):
             # client.publish(l2 , "coordinate")
             return l1, l2
             
-            
-        
-        
+              
         
     def open_input_dialog_event(self):
         dialog1 = customtkinter.CTkInputDialog(text="Type x, y, z coordinates:", title="CoordinateValue")
