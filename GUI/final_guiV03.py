@@ -475,22 +475,22 @@ class App(customtkinter.CTk):
     
     # Final Coordinate Calculations
     def final_coordinate(self,l3):
-        print("Done l3 - ", l3)
-        # # Load the saved model
-        # loaded_model = tf.keras.models.load_model('my_model_best.keras')
-        # print(loaded_model)
+        # Load the saved model
+        loaded_model = tf.keras.models.load_model(r'F:\Debabrata_Folder\PROJECT_WORK\TULIP\Tulip Sample Code\GITHUB\TULIP\GUI\model_best.keras')
+        print(loaded_model)
 
-        # # # Test the loaded model with new data
-        # # new_data = np.array([[-174,-150],[-28,118],[148,95],[55,-351]])
+        # # Test the loaded model with new data
+        new_data = np.array([[-11,-161],[-28,118],[148,95],[55,-351]])
         # new_data=l3
-        # new_data=new_data/100
-        # # Assuming new data has the same input shape as your training data
-        # new_data=tf.convert_to_tensor(new_data, dtype=tf.float32)
-        # print(new_data)
-        # predictions = loaded_model.predict(new_data)
+        new_data=new_data/100
+        # Assuming new data has the same input shape as your training data
+        new_data=tf.convert_to_tensor(new_data, dtype=tf.float32)
+        print(new_data)
+        predictions = loaded_model.predict(new_data)
 
-        # # Display the predictions
-        # print(predictions*100)
+        print("L3 - ", l3)
+        # Display the predictions
+        print("All Predictions are - ",predictions*100)
         # return(round(predictions*100))
     
     # Pixel to Conordinte Convertion
