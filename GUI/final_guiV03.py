@@ -382,19 +382,6 @@ class App(customtkinter.CTk):
         ret, depth_frame, color_frame = self.camera.get_frame()
         depth = self.camera.get_depth_frame()
         counter=0
-        # x=230
-        # y=167
-        # # depth_frame = self.depth_camera.get_depth_frame()
-        # depth_intrin = depth.profile.as_video_stream_profile().intrinsics
-        # depth = depth.get_distance(x, y)
-        
-        # if depth <= 0:
-        #     raise ValueError("Invalid depth value.")
-        
-        # point = rs.rs2_deproject_pixel_to_point(depth_intrin, [x, y], depth)
-        # x, y, z = point[0], point[1], point[2]
-        # print(point)
-        
         if ret:
             filename =  f"frame_{counter}.jpg"
             cv2.imwrite(filename, color_frame)
@@ -466,13 +453,20 @@ class App(customtkinter.CTk):
         # l3=[1,2,3,4,5,6]
         # client.publish(a , client.coordinate_topic)
         # self.detection_confarmation()
-        print("Final Coordinate - ",a)
+        # print("Final Coordinate - ",a)
         print("Type - ", type(a))
         print("pixel center Point - ",l2)
         print("Type - ", type(l2))
         self.open_detection_confarmation()
         return a, l1, l2, l3
     
+    # Ofset Value
+    def ofset(self, predictions, ofset_x=0,ofset_y=0):
+        result_coordinate = []
+        for i in range(len(predictions)):
+            result_coordinate.append((predictions[i][0] *100) + ofset_x)
+            result_coordinate.append((predictions[i][1] * 100) + ofset_y)
+        print("Final Coordinate - ", result_coordinate)
     # Final Coordinate Calculations
     def final_coordinate(self,l3):
         # Load the saved model
@@ -491,7 +485,9 @@ class App(customtkinter.CTk):
         print("L3 - ", l3)
         # Display the predictions
         print("All Predictions are - ",predictions*100)
-        # return(round(predictions*100))
+        # predictions = round(predictions*100)
+        self.ofset(predictions)
+        return(predictions)
     
     # Pixel to Conordinte Convertion
     # def coordinate():
