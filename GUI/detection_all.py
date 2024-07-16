@@ -1,10 +1,3 @@
-## License: Apache 2.0. See LICENSE file in root directory.
-## Copyright(c) 2015-2017 Intel Corporation. All Rights Reserved.
-
-###############################################
-##      Open CV and Numpy integration        ##
-###############################################
-
 import pyrealsense2 as rs
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -114,7 +107,7 @@ if __name__=="__main__":
     
     found=True
     
-    cfg.enable_stream(rs.stream.depth, 848,480, rs.format.z16, 30)
+    cfg.enable_stream(rs.stream.depth, 1280,720, rs.format.z16, 30)
     cfg.enable_stream(rs.stream.color, 1280,720, rs.format.bgr8, 30)
     
     profile=pipe.start(cfg)
@@ -176,7 +169,7 @@ if __name__=="__main__":
     l2=[]
     depth_calcu_values=[]
     # Load the Best Model
-    model = YOLO('weights//best.pt')
+    model = YOLO('best.pt')
     path = "Exposure_Image"
     # List the files in the folder.
     files = os.listdir(path)
@@ -214,8 +207,8 @@ if __name__=="__main__":
     
     # cv2.line(detected_image, (640,0), (640, 720), (255, 0, 0), 2)
     # cv2.line(detected_image, (0,360), (1280, 360), (255, 0, 0), 2)
-    cv2.imwrite('Result_Image/detected_image02.jpg', detected_image)
-    cv2.imshow("YOLOv8 Inference", detected_image)
+    # cv2.imwrite('Result_Image/detected_image02.jpg', detected_image)
+    # cv2.imshow("YOLOv8 Inference", detected_image)
     if cv2.waitKey(0) & 0xFF == ord("q"):
         cv2.destroyAllWindows()
     

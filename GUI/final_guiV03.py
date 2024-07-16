@@ -11,9 +11,11 @@ import glob
 from ultralytics import YOLO
 from utils import *
 import string
+import math
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+from tensorflow import keras
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense
 
 counter=0
 client=Mqtt_Node(1883,'localhost')
@@ -29,7 +31,7 @@ class DepthCamera:
         pipeline_profile = config.resolve(pipeline_wrapper)
         self.device = pipeline_profile.get_device()
         self.device_product_line = str(self.device.get_info(rs.camera_info.product_line))
-        config.enable_stream(rs.stream.depth, 848,480, rs.format.z16, 30)
+        config.enable_stream(rs.stream.depth, 1280,720, rs.format.z16, 30)
         config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
         self.cfg = self.pipeline.start(config)
         self.depth_sensor = self.cfg.get_device().first_depth_sensor()
@@ -106,8 +108,8 @@ customtkinter.set_default_color_theme("blue")
 
 # Top Level Window
 class Coordinate_input(customtkinter.CTkToplevel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        super().__init__()
         self.geometry("400x350")
         self.title("Co-ordinate Input")
         self.label = customtkinter.CTkLabel(self, text="Enter Coordinate Values")
@@ -135,7 +137,7 @@ class confarmation_page(customtkinter.CTkToplevel):
     # detection_confarmation Function Action
     def submit_choice(self, choice):
         print("Select - ", choice)
-        # client.publish(f"Run:{choice}", client.ack_topic)
+        client.publish(f"Ack:{choice}", client.ack_topic)
         self.destroy()
 
 # Tkinter API
@@ -261,7 +263,7 @@ class App(customtkinter.CTk):
         x_list = x.split(", ")
         x_list = [int(i) for i in x_list]
         print("Coordinates Value  - ", x_list)
-        # client.publish(x_list, "coordinate")
+        client.publish(x_list, client.coordinate_topic)
         
         # try:
         #     self.entry.delete(0,tk.END)
@@ -308,7 +310,7 @@ class App(customtkinter.CTk):
                 image = Image.fromarray(image)
                 # if(flag==0):
                 #     image = Image.fromarray(depth_frame)        
-            photo = customtkinter.CTkImage(image , size=(1080, 720))
+            photo = customtkinter.CTkImage(image , size=(650, 450))
             self.label.configure(image=photo)
             self.label.image = photo
             self.label.grid(row=0, column=1, padx=(10, 0), pady=(10, 0), sticky="nsew")                  
@@ -395,7 +397,7 @@ class App(customtkinter.CTk):
             f.close()
             print("Depth frame_{}.txt image saved".format(counter))
             counter+=1
-            tkinter.messagebox.showinfo("Image Saved", f"Image saved as {filename}")
+            # tkinter.messagebox.showinfo("Image Saved", f"Image saved as {filename}")
             file1= open("test.txt","w")
             file1.write(str(counter))
             print(" Color frame_{}.jpg image saved".format(counter))
@@ -403,10 +405,9 @@ class App(customtkinter.CTk):
         ###############################################
 
         frame = cv2.imread("frame_0.jpg")
-        # depth_frame = np.loadtxt("frame_0.txt")
         l1= []
         l2=[]
-        model = YOLO(r'F:\Debabrata_Folder\PROJECT_WORK\TULIP\Tulip Sample Code\GITHUB\YoloV8\Weight_V02\best.pt')
+        model = YOLO('best.pt')
         results = model(frame)
         #annotated_frame = results[0].plot()
         #bounding_box = results[0]
@@ -438,6 +439,9 @@ class App(customtkinter.CTk):
         else:
             self.entry.delete(0, tk.END)
             self.entry.insert(0,"No Object Found")
+
+        # Here l2 used for testing Purpose
+        l2 = [[280, 209],[460, 244 ]]
         l3=[]
         depth_intrin = depth.profile.as_video_stream_profile().intrinsics
         for i in range(len(l2)):
@@ -445,7 +449,8 @@ class App(customtkinter.CTk):
             coordinate_point = rs.rs2_deproject_pixel_to_point(depth_intrin, [l2[i][0],l2[i][1]], depth_value)
             coordinate_point = [round(coordinate_point[0]*1000), round(coordinate_point[1] * 1000), round(coordinate_point[2] * 1000)]
             l3.append(coordinate_point)
-            
+        print("L3 = ", l3)
+        # l3 = [[-11, -161, 1120],[-78, -20, 1367],[46, 24, 1231],[-146, 155, 1095]]    
         # Final Coordinate Calculation
         a = self.final_coordinate(l3)
         # l3 = self.camera.coordinate(depth_frame)    
@@ -453,12 +458,11 @@ class App(customtkinter.CTk):
         # l3=[1,2,3,4,5,6]
         # client.publish(a , client.coordinate_topic)
         # self.detection_confarmation()
-        # print("Final Coordinate - ",a)
-        print("Type - ", type(a))
+        print("Final Coordinate - ",a)
+        # print("Type - ", type(a))
         print("pixel center Point - ",l2)
-        print("Type - ", type(l2))
         self.open_detection_confarmation()
-        return a, l1, l2, l3
+        return  a, l1, l2, l3
     
     # Ofset Value
     def ofset(self, predictions, ofset_x=0,ofset_y=0):
@@ -470,24 +474,26 @@ class App(customtkinter.CTk):
     # Final Coordinate Calculations
     def final_coordinate(self,l3):
         # Load the saved model
-        loaded_model = tf.keras.models.load_model(r'F:\Debabrata_Folder\PROJECT_WORK\TULIP\Tulip Sample Code\GITHUB\TULIP\GUI\model_best.keras')
+        loaded_model = tf.keras.models.load_model('model_best.keras')
         print(loaded_model)
-
-        # # Test the loaded model with new data
-        new_data = np.array([[-11,-161],[-28,118],[148,95],[55,-351]])
+        z_value = [sublist[-1] for sublist in l3]
+        new_data = [sublist[:-1] for sublist in l3]
+        new_data = np.array(new_data)
         # new_data=l3
         new_data=new_data/100
-        # Assuming new data has the same input shape as your training data
         new_data=tf.convert_to_tensor(new_data, dtype=tf.float32)
         print(new_data)
         predictions = loaded_model.predict(new_data)
-
-        print("L3 - ", l3)
-        # Display the predictions
-        print("All Predictions are - ",predictions*100)
+        predictions = predictions*100
+        output = []
+        for i in range(len(predictions)):
+            output.append(int(predictions[i][0]))
+            output.append(int(predictions[i][1]))
+            output.append(z_value[i])
+        print("Prediction - ",output)
         # predictions = round(predictions*100)
-        self.ofset(predictions,10,10)
-        return(predictions)
+        # self.ofset(predictions,10,10)
+        return(output)
     
     # Pixel to Conordinte Convertion
     # def coordinate():
@@ -503,9 +509,10 @@ class App(customtkinter.CTk):
     
     # Multiple Exposure Detection
     def mul_exp_detection(self):
-        ###########################################
+         ###########################################
         # Photo Capture
         ret, depth_frame, color_frame = self.camera.get_frame()
+        depth = self.camera.get_depth_frame()
         counter=0
         if ret:
             filename =  f"frame_{counter}.jpg"
@@ -515,13 +522,11 @@ class App(customtkinter.CTk):
             f.close()
             print("Depth frame_{}.txt image saved".format(counter))
             counter+=1
-            tkinter.messagebox.showinfo("Image Saved", f"Image saved as {filename}")
             file1= open("test.txt","w")
             file1.write(str(counter))
             print(" Color frame_{}.jpg image saved".format(counter))
 
         ###############################################
-        model = YOLO('yolov8_weights/best.pt')
         frame = cv2.imread("frame_0.jpg")
         counter = 0
         # Multiple Exposure Convert
@@ -536,39 +541,65 @@ class App(customtkinter.CTk):
             cv2.imwrite("Exposure_Image/exp_image_{}.jpg".format(i), exposed_image)
         l1= []
         l2=[]
+        model = YOLO('best.pt')
         path = "Exposure_Image"
         # List the files in the folder.
         files = os.listdir(path)
-        # Read all images in the folder.
-        images = []
         # Detect  Object from each image and save it to list
         for file in files:
+            print("Inside For")
             file_path = os.path.join(path, file)
-            img = cv2.imread(file_path)
+            frame = cv2.imread(file_path)
             counter=counter+1
-            results = model(img)
-            annotated_frame = results[0].plot()
-            bounding_box = results[0]
-            # Extract bounding boxes, classes, names, and confidences
+            # self.mul_detection(frame,model,l1,l2)
+            results = model(frame)
+            # Extract Bounding boxes, classes...etc details
             boxes = results[0].boxes.xyxy.tolist()
-            classes = results[0].boxes.cls.tolist()
-            names = results[0].names
             confidences = results[0].boxes.conf.tolist()
-            # Add new detections to the list if their confidence is above 50%
-            if(len(boxes)>len(l1)):
-                l1.clear()
+            if(len(boxes)>=1):
+                print("Done")
                 for box, confidence in zip(boxes, confidences):
-                    if confidence >= 0.1:
+                    if confidence > 0.1:
                         l1.append(box)
-                        # Center Point Calcute
-                        center_x = round((box[0] + box[2]) / 2)
-                        center_y = round((box[1] + box[3]) / 2)
-                        l2.append((center_x, center_y))
+                        center_x = round((box[0] + box[2])/2)
+                        center_y = round((box[1] + box[3])/2)
+                        l2.append((center_x,center_y))
+         
+
+        # Remove duplicate values
+        threshold = 8
+        final_points = []
+        for point in l2:
+            if not final_points:
+                final_points.append(point)
+            else:
+                distances = [self.euclidean_distance(point, p) for p in final_points]
+                if all(d>=threshold for d in distances):
+                    final_points.append(point)
+
+        l2 = final_points 
+        l2 = [[280, 209],[460, 244 ]]
+        l3=[]
+        # Pixel to Coordinate (x,y,z) conversion
+        depth_intrin = depth.profile.as_video_stream_profile().intrinsics
+        for i in range(len(l2)):
+            depth_value = depth.get_distance(l2[i][0],l2[i][1])
+            coordinate_point = rs.rs2_deproject_pixel_to_point(depth_intrin, [l2[i][0],l2[i][1]], depth_value)
+            coordinate_point = [round(coordinate_point[0]*1000), round(coordinate_point[1] * 1000), round(coordinate_point[2] * 1000)]
+            l3.append(coordinate_point)
             
-            # client.publish(l2 , "coordinate")
-            return l1, l2
+        a = self.final_coordinate(l3)
+        # client.publish(a , client.coordinate_topic)
+        print("Final Coordinate - ",a)
+        # print("pixel center Point - ",l2)
+        self.open_detection_confarmation()
             
-              
+        # client.publish(l2 , "coordinate")
+        return l1, l2, l3
+            
+    # Calculate Eucliden Distence
+    def euclidean_distance(self, p1, p2):
+        return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)          
         
     def open_input_dialog_event(self):
         dialog1 = customtkinter.CTkInputDialog(text="Type x, y, z coordinates:", title="CoordinateValue")
@@ -587,10 +618,11 @@ class App(customtkinter.CTk):
         value =[int(x), int(y), int(z)]
         print(type(value[0]))
         
-        client.publish(value, "coordinate")
+        client.publish(value, client.coordinate_topic)
         try:
+            print("X, Y, Z coordinates : ", x,y,z)
             self.entry.delete(0,tk.END)
-            self.entry.insert(0,print("X, Y, Z coordinates : ", x,y,z))
+            self.entry.insert(0,'Data Succesfully Send')
         except Exception as e:
             self.entry.delete(0,tk.END)
             self.entry.insert(0,e)
@@ -636,7 +668,7 @@ class App(customtkinter.CTk):
 
 if __name__ == "__main__":
        
-    # client.connect_mqtt()
+    #client.connect_mqtt()
     app = App()
     # client.subscribe(app,client.error_topic)
     # client.subscribe(app,client.ack_topic)
